@@ -11,7 +11,7 @@
         "app_url": "https://telex-newsletter.duckdns.org",
         "background_color": "#864def"
       },
-      "integration_category": "Embeds",
+      "integration_category": "Task Automation",
       "integration_type": "output",
       "is_active": true,
       "key_features": [
