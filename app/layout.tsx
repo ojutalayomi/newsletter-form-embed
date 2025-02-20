@@ -1,5 +1,6 @@
 import "./globals.css";
 import { Inter } from "next/font/google";
+import { ThemeProvider } from "@/providers/theme-provider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -15,7 +16,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="h-full">
-      <body className={`h-full ${inter.className}`}>{children}</body>
+      <body className={`h-full ${inter.className}`}>
+        <ThemeProvider defaultTheme="system" storageKey="newsletter-ui-theme">
+          {children}
+        </ThemeProvider>
+      </body>
     </html>
   );
 }

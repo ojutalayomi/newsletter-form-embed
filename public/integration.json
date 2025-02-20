@@ -9,21 +9,11 @@
         "app_logo": "https://telex-newsletter.duckdns.org/emb.svg",
         "app_name": "Newsletter Form",
         "app_url": "https://telex-newsletter.duckdns.org",
-        "background_color": "#HEXCODE"
+        "background_color": "#864def"
       },
-      "integration_category": "Communication & Collaboration",
+      "integration_category": "Embeds",
       "integration_type": "output",
       "is_active": true,
-      "output": [
-        {
-          "label": "output_channel_1",
-          "value": true
-        },
-        {
-          "label": "output_channel_2",
-          "value": false
-        }
-      ],
       "key_features": [
         "Customizable subscription form",
         "Option to specify preferences",
@@ -31,8 +21,10 @@
         "User-friendly interface"
       ],
       "permissions": {
-        "required": true,
-        "scopes": ["read", "write"]
+        "monitoring_user": {
+            "always_online": true,
+            "display_name": "Performance Monitor"
+        }
       },
       "settings": [
         {
@@ -48,14 +40,13 @@
           "default": ""
         },
         {
-          "label": "interval",
-          "type": "radio",
+          "label": "channel_id",
+          "type": "text",
           "required": true,
-          "default": "daily",
-          "options": ["daily", "weekly", "monthly"]
+          "default": ""
         }
       ],
       "tick_url": "https://telex-newsletter.duckdns.org/api/integration",
-      "target_url": "https://telex-newsletter.duckdns.org/api/integration"
+      "target_url": "https://telex-newsletter.duckdns.org/api/py/generate"
     }
   }
