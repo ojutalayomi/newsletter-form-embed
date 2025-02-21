@@ -27,7 +27,9 @@ app = FastAPI(docs_url="/api/py/docs", openapi_url="/api/py/openapi.json")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://telex.im",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
