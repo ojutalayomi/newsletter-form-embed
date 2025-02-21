@@ -1,8 +1,11 @@
 import requests
-from fastapi import FastAPI, status
+import re
+from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel
+
+from api.integrationController.index import getIntegration
 
 class TelexNewsletterRequest(BaseModel):
     firstname: str
@@ -35,35 +38,106 @@ def hello_fast_api():
     return {"message": "Hello from FastAPI"}
 
 
-@app.get("/api/py/home", response_class=HTMLResponse)
-def home():
-    return "<iframe src='http://localhost:3000/' style='border-radius: 12px;border: 0;height: 650px;' title='Telex Newsletter Form'></iframe>"
+@app.get("/api/py/integration.json", response_class=JSONResponse)
+def home(req: Request):
+    # Get base URL
+    base_url = str(req.base_url)
+    return getIntegration(base_url)
 
 def extractObject(setting):
     return setting.label == "webhook-slug"
 
 @app.post("/api/py/generate")
-async def generate(request: TargetRequest):
-    # Extract `message` and `settings` from the request body
-    print(request)
-    message = request.get("message")
-    settings = request.get("settings", [])
+async def generate(request: TargetRequest, req: Request):
+    try:
+        # Get base URL
+        base_url = str(req.base_url)
+        # Extract `message` and `settings` from the request body
+        print(request)
+        message = request.get("message")
+        message = re.search("/embed-form",message)
 
-    # Find the slug by filtering the settings list
-    slug = next((setting.get("default") for setting in settings if setting.get("label") == "webhook-slug"), None)
-    print("\n"+slug)
+        if not message:
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST, content={
+                    "event_name": "Invalid Command",
+                    "message":    "type '/embed-form' to get the unique url for your html forms",
+                    "status":     "success",
+                    "username":   "Embed Form Bot",
+                }
+            )
+        
+        settings = request.get("settings", [])
+        
 
-    if not slug:
+        # Find the slug by filtering the settings list
+        channel_id = next((setting.get("default") for setting in settings if setting.get("label") == "channel_id"), None)
+        form_name = next((setting.get("default") for setting in settings if setting.get("label") == "form_name"), None)
+        logo_url = next((setting.get("default") for setting in settings if setting.get("label") == "logo_url"), None)
+
+        if not channel_id:
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST, content={
+                    "event_name": "Missing data",
+                    "message": "channel_id not found",
+                    "status":     "success",
+                    "username":   "Embed Form Bot",
+                }
+            )
+        elif not form_name:
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST, content={
+                    "event_name": "Missing data",
+                    "message": "form_name not found",
+                    "status":     "success",
+                    "username":   "Embed Form Bot",
+                }
+            )
+        elif not logo_url:
+            return JSONResponse(
+                status_code=status.HTTP_400_BAD_REQUEST, content={
+                    "event_name": "Missing data",
+                    "message": "logo_url not found",
+                    "status":     "success",
+                    "username":   "Embed Form Bot",
+                }
+            )
+        
+        url = f"{base_url}/form/{channel_id}?form_name={form_name}&logo_url={logo_url}"
+        iframe = f"<iframe src='{url}' style='border-radius: 12px;border: 0;height: 650px;' title='Telex Newsletter Form'></iframe>"
+
         return JSONResponse(
-            status_code=status.HTTP_400_BAD_REQUEST, content={"message": "Slug not found"}
+            status_code=status.HTTP_200_OK,
+            content={
+                "event_name": "Form URL Generated",
+                "message": "Successfully generated embed code",
+                "status": "success",
+                "username": "Embed Form Bot",
+                "data": {
+                    "iframe_code": iframe,
+                    "url": url,
+                    "channel_id": channel_id
+                }
+            }
+        )
+    
+    except Exception as e:
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={
+                "event_name": "Error",
+                "message": f"Failed to generate form URL: {str(e)}",
+                "status": "error",
+                "username": "Embed Form Bot"
+            }
         )
     
 
-url = "https://ping.telex.im/v1/webhooks/01951ee7-d706-7239-9d78-a035cfc2e381"
 
-@app.post("/api/py/telex-newsletter")
-async def telex(request: TelexNewsletterRequest):
+@app.post("/api/py/telex-newsletter/{channel_id}")
+async def telex_newsletter(request: TelexNewsletterRequest, channel_id: str):
     print(request.model_dump_json())
+    url = f"https://ping.telex.im/v1/webhooks/{channel_id}"
 
     payload = {
         "event_name": "Newsletter Form",
@@ -83,7 +157,7 @@ async def telex(request: TelexNewsletterRequest):
 
     dict = Dict(**response.json())
 
-    if dict.status_code == 200:
+    if 200 <= dict.status_code < 300:
         return response.json()
     else:
         return JSONResponse(

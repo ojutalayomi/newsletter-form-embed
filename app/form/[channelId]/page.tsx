@@ -1,5 +1,5 @@
 "use client"
- 
+import Image from "next/image";
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import axios from "axios";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useState } from "react";
+import { useParams } from "next/navigation";
 
 const items = [
   {
@@ -34,8 +35,18 @@ const formSchema = z.object({
   }),
 })
 
-export default function Home() {
+export default function EmbedForm() {
+  const params = useParams<{ channelId: string }>();
   const [loading, setLoading] = useState(false)
+  const [searchParams] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return new URLSearchParams(window.location.search);
+    }
+    return new URLSearchParams();
+  });
+  const form_name = searchParams.get("form_name")
+  const logo_url = searchParams.get("logo_url")
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -46,33 +57,39 @@ export default function Home() {
  
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
+      setLoading(true)
       console.log(values)
       const response = await axios.post(
-        "/api/py/telex-newsletter", 
+        "/api/py/telex-newsletter/"+params.channelId, 
         values,
         {
           onDownloadProgress: (progressEvent) => {
+            const percentCompleted = progressEvent.total ? Math.round((progressEvent.loaded * 100) / progressEvent.total) : 0
             setLoading(true)
           }
         }
       )
+      if (response.status === 200) {
+        alert("Successfully subscribed to newsletter!")
+        form.reset()
+      }
     } catch (err) {
       console.error(err)
     } finally {
-      setLoading
+      setLoading(false)
     }
 
   }
 
   return (
     <div className="flex h-full items-center justify-center">
-        <div className="rounded-xl flex-1 p-4 h-full border border-gray-200 dark:border-neutral-800/30 bg-white dark:bg-zinc-800/30">
+        <div className="rounded-xl flex-1 p-4 h-full border border-gray-200 dark:border-neutral-800 dark:bg-gray-900">
             <div className="border flex overflow-hidden mx-auto rounded-xl">
             <div className="flex flex-col items-center justify-center mx-auto p-4 bg-[#864def] text-white w-2/12">
-                <svg className="size-9" viewBox="-3.2 -3.2 38.40 38.40" xmlns="http://www.w3.org/2000/svg" fill="#ffffff" transform="matrix(-1, 0, 0, -1, 0, 0)rotate(0)" stroke="#ffffff" strokeWidth="0.00032"><g id="SVGRepo_bgCarrier" strokeWidth="0" transform="translate(0,0), scale(1)"></g><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round" stroke="#ededed" strokeWidth="3.2"> <g fill="none"> <circle fill="#864def" cx="16" cy="16" r="16"></circle> <path d="M26.822 15.568l-10.39-10.39a.607.607 0 00-.86 0L5.18 15.569a.607.607 0 000 .86l10.39 10.393a.607.607 0 00.859 0l10.39-10.389a.608.608 0 00.004-.864zm-2.284.52l-7.616 7.616V16h-1.848v7.704l-7.616-7.616a.12.12 0 010-.172l8.454-8.453a.12.12 0 01.172 0l8.454 8.453a.12.12 0 010 .172c0-.004 0-.004 0 0z" fill="#ffffff"></path> </g> </g><g id="SVGRepo_iconCarrier"> <g fill="none"> <circle fill="#864def" cx="16" cy="16" r="16"></circle> <path d="M26.822 15.568l-10.39-10.39a.607.607 0 00-.86 0L5.18 15.569a.607.607 0 000 .86l10.39 10.393a.607.607 0 00.859 0l10.39-10.389a.608.608 0 00.004-.864zm-2.284.52l-7.616 7.616V16h-1.848v7.704l-7.616-7.616a.12.12 0 010-.172l8.454-8.453a.12.12 0 01.172 0l8.454 8.453a.12.12 0 010 .172c0-.004 0-.004 0 0z" fill="#ffffff"></path> </g> </g></svg>    
+                {logo_url ? <Image className="size-9" src={logo_url} alt="Newsletter Logo" width={24} height={24} /> : <Image className="size-9" src="https://telex-newsletter.duckdns.org/emb.svg" alt="Newsletter Logo" width={24} height={24} />}
             </div>
             <div className="flex flex-1 flex-col items-center mx-auto p-4">
-                <h1 className="text-2xl text-center">Newsletter</h1>
+                <h1 className="text-2xl text-center">{form_name ? form_name : 'Newsletter'}</h1>
                 <h2 className="text-xl text-center">Sign Up For Our Newsletter</h2>
                 <h3 className="text-sm text-center">Fill in your information to sign up.</h3>
             </div>
@@ -161,7 +178,9 @@ export default function Home() {
                     </FormItem>
                 )}
                 />
-                <Button className="w-full" type="submit">Submit</Button>
+                <Button className="w-full" type="submit">
+                  {loading ? "Loading..." : "Submit"}
+                </Button>
             </form>
             </Form>
         </div>

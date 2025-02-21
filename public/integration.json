@@ -28,7 +28,13 @@
       },
       "settings": [
         {
-          "label": "name",
+          "label": "form_name",
+          "type": "text",
+          "required": true,
+          "default": ""
+        },
+        {
+          "label": "logo_url",
           "type": "text",
           "required": true,
           "default": ""
