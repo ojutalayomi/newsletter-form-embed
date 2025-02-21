@@ -54,10 +54,9 @@ async def generate(request: TargetRequest, req: Request):
         base_url = str(req.base_url)
         # Extract `message` and `settings` from the request body
         print(request)
-        message = request.get("message")
-        message = re.search("/embed-form",message)
+        message = request.message
 
-        if not message:
+        if not "/embed-form" in message:
             return JSONResponse(
                 status_code=status.HTTP_400_BAD_REQUEST, content={
                     "event_name": "Invalid Command",
@@ -67,7 +66,7 @@ async def generate(request: TargetRequest, req: Request):
                 }
             )
         
-        settings = request.get("settings", [])
+        settings = request.settings
         
 
         # Find the slug by filtering the settings list
@@ -75,31 +74,16 @@ async def generate(request: TargetRequest, req: Request):
         form_name = next((setting.get("default") for setting in settings if setting.get("label") == "form_name"), None)
         logo_url = next((setting.get("default") for setting in settings if setting.get("label") == "logo_url"), None)
 
-        if not channel_id:
+        # Validate required fields
+        if not channel_id or not form_name or not logo_url:
+            missing_field = "channel_id" if not channel_id else "form_name" if not form_name else "logo_url"
             return JSONResponse(
-                status_code=status.HTTP_400_BAD_REQUEST, content={
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content={
                     "event_name": "Missing data",
-                    "message": "channel_id not found",
-                    "status":     "success",
-                    "username":   "Embed Form Bot",
-                }
-            )
-        elif not form_name:
-            return JSONResponse(
-                status_code=status.HTTP_400_BAD_REQUEST, content={
-                    "event_name": "Missing data",
-                    "message": "form_name not found",
-                    "status":     "success",
-                    "username":   "Embed Form Bot",
-                }
-            )
-        elif not logo_url:
-            return JSONResponse(
-                status_code=status.HTTP_400_BAD_REQUEST, content={
-                    "event_name": "Missing data",
-                    "message": "logo_url not found",
-                    "status":     "success",
-                    "username":   "Embed Form Bot",
+                    "message": f"{missing_field} not found",
+                    "status": "error",
+                    "username": "Embed Form Bot",
                 }
             )
         
