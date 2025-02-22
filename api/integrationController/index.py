@@ -25,9 +25,9 @@ class Payload(BaseModel):
     status: str
     username: str
 
-def makeResponse(data: Payload) -> Union[Dict, None]:
+def makeResponse(data: Payload, channel_id: str) -> Union[Dict, None]:
     try:
-        url = f"https://ping.telex.im/v1/webhooks/{data.channel_id}"
+        url = f"https://ping.telex.im/v1/webhooks/{channel_id}"
 
         payload = {
             "event_name": data.event_name,

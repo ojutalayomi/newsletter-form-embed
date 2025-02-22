@@ -94,7 +94,7 @@ async def generate(request: TargetRequest, req: Request):
             username="Embed Form Bot"
         )
 
-        response = makeResponse(payload)
+        response = makeResponse(payload, channel_id)
         dict = Dict(**response)
 
         if 200 <= dict.status_code < 300:
@@ -132,7 +132,7 @@ async def telex_newsletter(request: TelexNewsletterRequest, channel_id: str):
         "username": "ojutalayomi"
     }
 
-    response = makeResponse(payload)
+    response = makeResponse(payload, channel_id)
 
     dict = Dict(**response)
 
