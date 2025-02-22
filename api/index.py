@@ -125,12 +125,12 @@ async def telex_newsletter(request: TelexNewsletterRequest, channel_id: str):
     print(request.model_dump_json())
     url = f"https://ping.telex.im/v1/webhooks/{channel_id}"
 
-    payload = {
-        "event_name": "Newsletter Form",
-        "message": request.model_dump_json(),
-        "status": "success",
-        "username": "ojutalayomi"
-    }
+    payload = Payload(
+        event_name="Newsletter Form",
+        message=request.model_dump_json(),
+        status="success",
+        username="ojutalayomi"
+    )
 
     response = makeResponse(payload, channel_id)
 

@@ -17,7 +17,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full">
       <body className={`h-full ${inter.className}`}>
-        <ThemeProvider defaultTheme="system" storageKey="newsletter-ui-theme">
+        <ThemeProvider defaultTheme="light" storageKey="newsletter-ui-theme">
           {children}
         </ThemeProvider>
       </body>
