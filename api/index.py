@@ -5,22 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel
 
-from api.integrationController.index import getIntegration
-
-class TelexNewsletterRequest(BaseModel):
-    firstname: str
-    lastname: str
-    email: str
-    interval: str
-
-class Dict(BaseModel):
-    message: str
-    status_code: int
-    status: str
-
-class TargetRequest(BaseModel):
-    message: str
-    settings: list[dict]
+from api.integrationController.index import Dict, Payload, TargetRequest, TelexNewsletterRequest, getIntegration, makeResponse
 
 ### Create FastAPI instance with custom docs and openapi url
 app = FastAPI(docs_url="/api/py/docs", openapi_url="/api/py/openapi.json")
@@ -95,20 +80,32 @@ async def generate(request: TargetRequest, req: Request):
         url = f"{base_url}/form/{channel_id}?form_name={form_name}&logo_url={logo_url}"
         iframe = f"<iframe src='{url}' style='border-radius: 12px;border: 0;height: 650px;' title='Telex Newsletter Form'></iframe>"
 
-        return JSONResponse(
-            status_code=status.HTTP_200_OK,
-            content={
-                "event_name": "Form URL Generated",
-                "message": "Successfully generated embed code",
-                "status": "success",
-                "username": "Embed Form Bot",
-                "data": {
-                    "iframe_code": iframe,
-                    "url": url,
-                    "channel_id": channel_id
-                }
-            }
+        formatted_message = (
+            f"Here's your embed form details:\n\n"
+            f"Channel ID: {channel_id}\n"
+            f"Form URL: {url}\n\n"
+            f"Embed Code:\n{iframe}"
         )
+
+        payload = Payload(
+            event_name="Form URL Generated",
+            message=formatted_message,
+            status="success",
+            username="Embed Form Bot"
+        )
+
+        response = makeResponse(payload)
+        dict = Dict(**response)
+
+        if 200 <= dict.status_code < 300:
+            return JSONResponse(
+                status_code=status.HTTP_200_OK,
+                content=payload
+            )
+        else:
+            return JSONResponse(
+                status_code=status.HTTP_424_FAILED_DEPENDENCY, content=response
+            )
     
     except Exception as e:
         return JSONResponse(
@@ -135,20 +132,13 @@ async def telex_newsletter(request: TelexNewsletterRequest, channel_id: str):
         "username": "ojutalayomi"
     }
 
-    response = requests.post(
-        url,
-        json=payload,
-        headers={
-            "Accept": "application/json",
-            "Content-Type": "application/json"
-        }
-    )
+    response = makeResponse(payload)
 
-    dict = Dict(**response.json())
+    dict = Dict(**response)
 
     if 200 <= dict.status_code < 300:
-        return response.json()
+        return response
     else:
         return JSONResponse(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content=response.json()
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content=response
         )

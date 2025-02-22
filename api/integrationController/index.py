@@ -1,5 +1,56 @@
 import time
 
+from pydantic import BaseModel
+import requests
+from typing import Union
+
+class TelexNewsletterRequest(BaseModel):
+    firstname: str
+    lastname: str
+    email: str
+    interval: str
+
+class Dict(BaseModel):
+    message: str
+    status_code: int
+    status: str
+
+class TargetRequest(BaseModel):
+    message: str
+    settings: list[dict]
+
+class Payload(BaseModel):
+    event_name: str
+    message: str
+    status: str
+    username: str
+
+def makeResponse(data: Payload) -> Union[Dict, None]:
+    try:
+        url = f"https://ping.telex.im/v1/webhooks/{data.channel_id}"
+
+        payload = {
+            "event_name": data.event_name,
+            "message": data.message,
+            "status": data.status,
+            "username": data.username
+        }
+
+        response = requests.post(
+            url,
+            json=payload,
+            headers={
+                "Accept": "application/json",
+                "Content-Type": "application/json"
+            }
+        )
+        response.raise_for_status()  # Raises an HTTPError for bad responses
+        return response.json()
+        
+    except requests.exceptions.RequestException as e:
+        print(f"Error making request: {e}")
+        return None
+
 def getIntegration(url):
     current_date = time.strftime("%Y-%m-%d")
     return {
