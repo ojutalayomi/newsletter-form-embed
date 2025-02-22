@@ -29,6 +29,9 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "https://telex.im",
+        "https://staging.telex.im",
+        "http://telextest.im",
+        "http://staging.telextest.im"
     ],
     allow_credentials=True,
     allow_methods=["*"],
