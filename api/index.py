@@ -77,7 +77,7 @@ async def generate(request: TargetRequest, req: Request):
                 }
             )
         
-        url = f"{base_url}/form/{channel_id}?form_name={form_name}&logo_url={logo_url}"
+        url = f"{base_url}form/{channel_id}?form_name={form_name}&logo_url={logo_url}"
         iframe = f"<iframe src='{url}' style='border-radius: 12px;border: 0;height: 650px;' title='Telex Newsletter Form'></iframe>"
 
         formatted_message = (
@@ -100,7 +100,7 @@ async def generate(request: TargetRequest, req: Request):
         if 200 <= dict.status_code < 300:
             return JSONResponse(
                 status_code=status.HTTP_200_OK,
-                content=payload
+                content=payload.model_dump()
             )
         else:
             return JSONResponse(
