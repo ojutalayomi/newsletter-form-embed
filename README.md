@@ -106,10 +106,11 @@ To test endpoints, use tools like [Postman](https://www.postman.com/) or `curl`:
   - copy the generated iframe and embed it in your webpage.
   ```html
   <iframe src='https://telex-newsletter.duckdns.org/form/01951ee7-d706-7239-9d78-a035cfc2e381?form_name=Ivy League&logo_url=https://ivy-league-lake.vercel.app/assets/ivyLight-7XsKi49T.png' style='border-radius: 12px;border: 0;height: 650px;' title='Telex Newsletter Form'></iframe>
+  ```
 
-  - After submitting the form, you can view the submitted data in your designated channel
+  - After submitting the form, you can view the submitted data in your designated channel.
   ![Newsletter Form sample form data](images/channels-action.png)
 
   ## Contact
 
-For support or inquiries, reach out to [Ojutalayomi](https://github.com/ojutalayomi) or open an issue on GitHub.
+  For support or inquiries, reach out to [Ojutalayomi](https://github.com/ojutalayomi) or open an issue on GitHub.
