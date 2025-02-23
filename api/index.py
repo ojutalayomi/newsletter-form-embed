@@ -1,11 +1,9 @@
-import requests
-import re
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse
-from pydantic import BaseModel
+from fastapi.responses import JSONResponse
 
 from api.integrationController.index import Dict, Payload, TargetRequest, TelexNewsletterRequest, getIntegration, makeResponse
+from api.utils import send_email
 
 ### Create FastAPI instance with custom docs and openapi url
 app = FastAPI(docs_url="/api/py/docs", openapi_url="/api/py/openapi.json")
@@ -67,6 +65,13 @@ async def generate(request: TargetRequest, req: Request):
         # Validate required fields
         if not channel_id or not form_name or not logo_url:
             missing_field = "channel_id" if not channel_id else "form_name" if not form_name else "logo_url"
+            payload = Payload(
+                event_name="Missing data",
+                message=f"{missing_field} not found",
+                status="error",
+                username="Embed Form Bot"
+            )
+            makeResponse(payload, channel_id)
             return JSONResponse(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 content={
@@ -82,7 +87,7 @@ async def generate(request: TargetRequest, req: Request):
 
         formatted_message = (
             f"Here's your embed form details:\n\n"
-            f"Channel ID: {channel_id}\n"
+            f"Channel ID: {channel_id}\n\n"
             f"Form URL: {url}\n\n"
             f"Embed Code:\n{iframe}"
         )
@@ -123,16 +128,41 @@ async def generate(request: TargetRequest, req: Request):
 @app.post("/api/py/telex-newsletter/{channel_id}")
 async def telex_newsletter(request: TelexNewsletterRequest, channel_id: str):
     print(request.model_dump_json())
-    url = f"https://ping.telex.im/v1/webhooks/{channel_id}"
+
+    message = f"""
+    You have a new subscriber to your newsletter!
+    Details:
+    • First Name: {request.firstname}
+    • Last Name: {request.lastname}
+    • Email: {request.email}
+    • Interval: {request.interval}
+    """
 
     payload = Payload(
         event_name="Newsletter Form",
-        message=request.model_dump_json(),
+        message=message,
         status="success",
         username="ojutalayomi"
     )
 
     response = makeResponse(payload, channel_id)
+
+    # Format email body
+    email_body = f"""
+    <h2>Newsletter Subscription</h2>
+    <p>You have a new subscriber to your newsletter!</p>
+    <p>Details:</p>
+    <ul>
+        <li>First Name: {request.firstname}</li>
+        <li>Last Name: {request.lastname}</li>
+        <li>Email: {request.email}</li>
+        <li>Interval: {request.interval}</li>
+    </ul>
+    """
+
+    name = f"{request.firstname} {request.lastname}"
+
+    send_email(request.email, email_body, name)
 
     dict = Dict(**response)
 
